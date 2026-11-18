@@ -31,6 +31,11 @@ QString withMediaDirectives(const QString &source, const QStringList &remove,
                             const QStringList &add);
 // The value of a key="value" attribute in a slide's hype: directive, or empty.
 QString slideProperty(const QString &source, const QString &key);
+// The GLSL background a slide resolves to, or empty when it keeps its solid
+// background: the slide's own directive wins over the deck's default, a color
+// or an explicit "theme"/"none" opts out, and an unknown name falls back to
+// the default, as transitions do.
+QString slideShaderBackground(const QString &source, const QString &deckDefault);
 // Sets, replaces, or with an empty value removes one key="value" attribute in a
 // slide's hype: directive. A slide without one gets a directive at its end;
 // code keeps its text.
@@ -53,7 +58,7 @@ void layoutSlideText(QTextDocument &document, const QString &markdown, const QVa
                      qreal fontSize, qreal width, bool centered, bool code);
 void paintSlide(QPainter *painter, const QRectF &target, const QString &source, const QString &base,
                 const QVariantMap &palette, QString *warning = nullptr, bool overlayOnly = false,
-                bool backgroundOnly = false);
+                bool backgroundOnly = false, const QString &background = QString());
 class SlideItem : public QQuickPaintedItem {
     Q_OBJECT
     Q_PROPERTY(Deck *deck READ deck WRITE setDeck NOTIFY deckChanged)

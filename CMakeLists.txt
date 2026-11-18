@@ -87,6 +87,35 @@ endforeach()
 add_executable(hype src/main.cpp src/resources.qrc)
 qt_add_resources(hype "transition_shaders" PREFIX "/transitions"
   BASE "${CMAKE_CURRENT_BINARY_DIR}/transitions" FILES ${transition_shaders})
+
+# Slide backgrounds follow the same pipeline: one ES 1.00 body each, wrapped
+# in modern GLSL, baked by qsb into :/backgrounds/<name>.frag.qsb. A new .glsl
+# file is enough; the glob picks it up, as the registry picks up its name.
+file(GLOB background_bodies CONFIGURE_DEPENDS src/backgrounds/*.glsl)
+list(REMOVE_ITEM background_bodies "${CMAKE_SOURCE_DIR}/src/backgrounds/common.glsl")
+set(background_shaders "")
+foreach(body IN LISTS background_bodies)
+  get_filename_component(background_name "${body}" NAME_WE)
+  set(background_frag "${CMAKE_CURRENT_BINARY_DIR}/backgrounds/${background_name}.frag")
+  set(background_qsb "${background_frag}.qsb")
+  add_custom_command(OUTPUT "${background_frag}"
+    COMMAND ${CMAKE_COMMAND}
+      "-DCOMMON=${CMAKE_SOURCE_DIR}/src/backgrounds/common.glsl"
+      "-DBODY=${body}"
+      "-DOUTPUT=${background_frag}"
+      -P "${CMAKE_SOURCE_DIR}/cmake/wrap-background.cmake"
+    DEPENDS "${body}" "${CMAKE_SOURCE_DIR}/src/backgrounds/common.glsl"
+            "${CMAKE_SOURCE_DIR}/cmake/wrap-background.cmake"
+    VERBATIM)
+  add_custom_command(OUTPUT "${background_qsb}"
+    COMMAND $<TARGET_FILE:Qt6::qsb> --qt6 -o "${background_qsb}" "${background_frag}"
+    DEPENDS "${background_frag}"
+    VERBATIM)
+  list(APPEND background_shaders "${background_qsb}")
+endforeach()
+
+qt_add_resources(hype "background_shaders" PREFIX "/backgrounds"
+  BASE "${CMAKE_CURRENT_BINARY_DIR}/backgrounds" FILES ${background_shaders})
 target_link_libraries(hype PRIVATE hype_core)
 target_compile_definitions(hype PRIVATE HYPE_VERSION="${HYPE_VERSION}")
 set_target_properties(hype PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
@@ -101,6 +130,8 @@ if(TARGET Qt6::Pdf)
   add_executable(hype_tests tests/tests.cpp src/resources.qrc)
   qt_add_resources(hype_tests "transition_shaders" PREFIX "/transitions"
     BASE "${CMAKE_CURRENT_BINARY_DIR}/transitions" FILES ${transition_shaders})
+  qt_add_resources(hype_tests "background_shaders" PREFIX "/backgrounds"
+    BASE "${CMAKE_CURRENT_BINARY_DIR}/backgrounds" FILES ${background_shaders})
   target_link_libraries(hype_tests PRIVATE hype_core Qt6::Widgets Qt6::Pdf Qt6::Test)
   set_target_properties(hype_tests PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
   add_test(NAME hype_tests COMMAND hype_tests)
@@ -119,7 +150,7 @@ set_tests_properties(hype_tests PROPERTIES ENVIRONMENT
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)
   add_test(NAME hype_commands
-    COMMAND ${Python3_EXECUTABLE} -m unittest test_cli test_export test_deck_navigation test_deck_render test_deck_svg test_deck_transitions test_shutdown
+    COMMAND ${Python3_EXECUTABLE} -m unittest test_cli test_export test_deck_navigation test_deck_render test_deck_svg test_deck_transitions test_deck_backgrounds test_shutdown
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
 else()
   add_test(NAME hype_commands COMMAND sh -c "echo 'hype_commands needs Python 3' >&2; exit 1")

@@ -2,7 +2,7 @@
 title: Hype
 font: JetBrains Mono
 theme: tokyo-night
-transition: "burn"
+transition: "halftone"
 ---
 
 > A presentation is a sequence of ideas.
@@ -38,6 +38,7 @@ class Presentation
   end
 end
 ```
+<!-- hype: transition="halftone" -->
 
 ---
 
