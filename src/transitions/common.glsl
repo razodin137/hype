@@ -33,6 +33,26 @@ float snoise(vec2 v) {
     return 130.0 * dot(m, g);
 }
 
+// Value noise, after the hash gl.js's own shader uses. Cheaper than simplex and
+// broad and soft, so a wipe reads as one surface instead of a gradient. The
+// names stay apart from hash21 so each helper keeps one meaning.
+float hashValue(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = hashValue(i);
+    float b = hashValue(i + vec2(1.0, 0.0));
+    float c = hashValue(i + vec2(0.0, 1.0));
+    float d = hashValue(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
 // A stable pseudo-random value in [0, 1) for a cell, used to roughen dissolves
 // and to drive glitch bands.
 float hash21(vec2 p) {

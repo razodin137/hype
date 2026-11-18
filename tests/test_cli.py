@@ -191,6 +191,9 @@ class CliTests(unittest.TestCase):
             shaders = json.loads(block.group(1))
             self.assertIn('float mask = clamp(field * 0.62', shaders['liquid'])
             self.assertIn('float band = floor(uv.y * 15.0)', shaders['glitch'])
+            # The two transitions from gl.js travel with the deck too.
+            self.assertIn('float field = valueNoise', shaders['burn'])
+            self.assertIn('float cell = mix(0.012, 0.05, strength)', shaders['halftone'])
 
     def test_flags_export_without_a_display_and_need_a_presentation(self):
         self.write(DECK)

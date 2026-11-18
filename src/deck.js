@@ -1512,7 +1512,7 @@ function transitionShaders() {
 // page with no transitions at all), but its header still resolves to a name;
 // whether that name has a body to compile is the engine's problem, not the
 // resolver's. Keep this list beside transitions.cpp's transitionNames().
-const TRANSITION_NAMES = ["none", "crossfade", "dissolve", "liquid", "glitch"]
+const TRANSITION_NAMES = ["none", "crossfade", "dissolve", "burn", "halftone", "liquid", "glitch"]
 
 // A slide's directive wins over the deck's header, and "none" wins over both.
 // An unknown name is ignored, as in the editor: the slide falls back to the

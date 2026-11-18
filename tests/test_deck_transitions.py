@@ -7,6 +7,7 @@ browser without one skips that check instead of failing the suite.
 """
 import base64
 import html
+import json
 import re
 import shutil
 import struct
@@ -407,6 +408,79 @@ transition-duration: 4
 """
 
 
+# A deck that uses one of the shaders ported from gl.js. The bodies are the
+# real ones, read from src/transitions by the test, so a GLSL ES 1.00 mistake
+# that WebGL would reject shows up here rather than as a silent skipped wipe.
+SHADER_PAGE = """<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>deck gl.js shaders</title>
+    <link rel="stylesheet" href="__STYLESHEET__">
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <button type="button" class="nav prev" aria-label="Previous">&#8249;</button>
+      <button type="button" class="nav next" aria-label="Next">&#8250;</button>
+      <div class="counter" id="counter"></div>
+    </div>
+    <script type="text/markdown" id="source">---
+transition: "__NAME__"
+transition-duration: 0.2
+---
+
+# One
+
+---
+
+# Two</script>
+    <script type="application/json" id="palette">{"background": "#1a1b26", "foreground": "#a9b1d6", "accent": "#7aa2f7"}</script>
+    <script type="application/json" id="transitions">__SHADERS__</script>
+    <script src="__SCRIPT__"></script>
+    <script>
+      window.addEventListener("load", async () => {
+        const results = []
+        const add = (ok, name, detail) =>
+          results.push((ok ? "PASS " : "FAIL ") + name + (detail === undefined ? "" : " (" + detail + ")"))
+        const canvas = document.createElement("canvas")
+        const webgl = !!canvas.getContext("webgl", { alpha: false, antialias: false })
+        if (!webgl) {
+          results.push("SKIP webgl unavailable in headless")
+        } else {
+          // Headless software WebGL is slow and its frames are unevenly
+          // spaced, so wait for the first frame instead of assuming a deadline.
+          const until = async (test, timeout) => {
+            const end = performance.now() + timeout
+            while (performance.now() < end) {
+              if (test()) return true
+              await new Promise(resolve => setTimeout(resolve, 25))
+            }
+            return test()
+          }
+          const sections = [...document.querySelectorAll("section.slide")]
+          window.show(1)
+          const overlay = document.querySelector("canvas.transition")
+          add(!!overlay, "transition overlay created")
+          const drew = await until(() =>
+            window.__transitionTrace && window.__transitionTrace.draws > 0, 1500)
+          add(drew, "transition drew frames",
+              window.__transitionTrace ? window.__transitionTrace.draws : 0)
+          const active = await until(() =>
+            sections[1].classList.contains("active") && !sections[0].classList.contains("active"),
+            1500)
+          add(active, "incoming slide active")
+        }
+        const report = document.createElement("pre")
+        report.id = "results"
+        report.textContent = results.join("\\n")
+        document.body.appendChild(report)
+      })
+    </script>
+  </body>
+</html>
+"""
+
+
 # A deck longer than the texture cache's limit. Visiting every slide must leave
 # only the last few textures behind: a transition needs two, and the rest would
 # hold pixel memory for slides the viewer has left.
@@ -676,6 +750,20 @@ class DeckTransitionTests(unittest.TestCase):
         self.assertGreaterEqual(report.count('PASS'), 6, report)
         self.assertTrue('PASS transition drew frames' in report or 'SKIP webgl' in report
                         or 'SKIP engine webgl' in report, report)
+
+    def test_gljs_shaders_compile_in_the_overlay(self):
+        common = (ROOT / 'src/transitions/common.glsl').read_text()
+        for name in ('burn', 'halftone'):
+            body = common + '\n' + (ROOT / 'src/transitions' / (name + '.glsl')).read_text()
+            shaders = json.dumps({name: body}).replace('<', '\\u003c')
+            page = (SHADER_PAGE.replace('__SHADERS__', shaders)
+                    .replace('__NAME__', name))
+            report = self.render(page)
+            self.assertNotIn('FAIL', report, report)
+            self.assertTrue('PASS transition drew frames' in report or 'SKIP webgl' in report,
+                            name + ': ' + report)
+            self.assertTrue('PASS incoming slide active' in report or 'SKIP webgl' in report,
+                            name + ': ' + report)
 
     def test_moving_media_texture_repaints_at_transition(self):
         animated = (ROOT / 'tests/fixtures/animated.gif').read_bytes()

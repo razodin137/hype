@@ -1192,7 +1192,7 @@ static void write(const QString &path, const QString &content) {
     void transitionRegistryIsShared() {
         const QStringList names = transitionNames();
         QVERIFY(names.contains("none"));
-        for (const char *name : {"crossfade", "dissolve", "liquid", "glitch"}) {
+        for (const char *name : {"crossfade", "dissolve", "burn", "halftone", "liquid", "glitch"}) {
             QVERIFY2(names.contains(name), name);
             const QString body = transitionBody(name);
             QVERIFY2(!body.isEmpty(), name);
@@ -1218,9 +1218,9 @@ static void write(const QString &path, const QString &content) {
         const QByteArray json = transitionsJson();
         QVERIFY(!json.contains("</script"));
         const auto object = QJsonDocument::fromJson(json).object();
-        QCOMPARE(object.size(), 4);
+        QCOMPARE(object.size(), 6);
         QVERIFY(!object.contains("none"));
-        for (const char *name : {"crossfade", "dissolve", "liquid", "glitch"})
+        for (const char *name : {"crossfade", "dissolve", "burn", "halftone", "liquid", "glitch"})
             QCOMPARE(object.value(name).toString(), transitionBody(name));
     }
     void transitionSelectionWritesFrontMatterAndSlides() {

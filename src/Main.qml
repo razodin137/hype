@@ -314,6 +314,7 @@ ApplicationWindow {
     // A slide transition's name, by the id the deck and its Markdown use.
     function transitionName(id) {
         return ({ "none": qsTr("None"), "crossfade": qsTr("Crossfade"), "dissolve": qsTr("Dissolve"),
+                  "burn": qsTr("Burn"), "halftone": qsTr("Halftone"),
                   "liquid": qsTr("Liquid"), "glitch": qsTr("Glitch") })[id] || id
     }
     function changeMode(name, preserveEditing) {

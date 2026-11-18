@@ -10,7 +10,8 @@
 // animating. A new transition is one more name here and one more .glsl file.
 QStringList transitionNames() {
     return {QStringLiteral("none"), QStringLiteral("crossfade"), QStringLiteral("dissolve"),
-            QStringLiteral("liquid"), QStringLiteral("glitch")};
+            QStringLiteral("burn"),    QStringLiteral("halftone"), QStringLiteral("liquid"),
+            QStringLiteral("glitch")};
 }
 
 static QString readTransitionResource(const QString &name) {
