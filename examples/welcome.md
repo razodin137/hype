@@ -2,6 +2,7 @@
 title: Hype
 font: JetBrains Mono
 theme: tokyo-night
+transition: "burn"
 ---
 
 > A presentation is a sequence of ideas.
@@ -24,6 +25,7 @@ Sovereign
 - Drag slides to reorder
 - Duplicate the good ones
 - Pick an Omarchy theme
+<!-- hype: transition="halftone" -->
 
 ---
 

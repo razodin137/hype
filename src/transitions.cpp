@@ -58,6 +58,7 @@ QString qtFragmentShader(const QString &name) {
         shader = QStringLiteral("uniform sampler2D fromTex;\n"
                                 "uniform sampler2D toTex;\n"
                                 "uniform float progress;\n"
+                                "uniform float seed;\n"
                                 "varying vec2 qt_TexCoord0;\n\n") +
                  body +
                  QStringLiteral("\nvoid main() {\n"

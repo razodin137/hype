@@ -1207,6 +1207,7 @@ static void write(const QString &path, const QString &content) {
             QVERIFY2(shader.contains("uniform sampler2D fromTex;"), name);
             QVERIFY2(shader.contains("uniform sampler2D toTex;"), name);
             QVERIFY2(shader.contains("uniform float progress;"), name);
+            QVERIFY2(shader.contains("uniform float seed;"), name);
             QVERIFY2(shader.contains("varying vec2 qt_TexCoord0;"), name);
             QVERIFY2(shader.contains("transition(qt_TexCoord0)"), name);
         }

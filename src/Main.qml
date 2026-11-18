@@ -75,6 +75,9 @@ ApplicationWindow {
     property string transitionTo: ""
     property string transitionShaderName: ""
     property real transitionProgress: 0
+    // Drawn afresh for every run: a seeded shader (halftone) reads it so the
+    // same slide change does not replay the same screen and front each time.
+    property real transitionSeed: 0
     // Both frames have to be decoded before the shader has anything to mix.
     property bool transitionPreparing: false
     property int transitionFromSlide: -1
@@ -453,6 +456,7 @@ ApplicationWindow {
         transitionAnimation.stop()
         transitionFromSlide = from
         transitionProgress = 0
+        transitionSeed = Math.random()
         transitionFrom = deck.renderId(from)
         transitionTo = deck.renderId(to)
         transitionShaderName = name
@@ -1733,6 +1737,7 @@ ApplicationWindow {
                         property ShaderEffectSource fromTex: transitionFromTexture
                         property ShaderEffectSource toTex: transitionToTexture
                         property real progress: win.transitionProgress
+                        property real seed: win.transitionSeed
                         // Keep a shader installed even while no transition runs:
                         // Qt's shaderless default samples a "source" texture this
                         // effect does not have, and warns about it on every reset.

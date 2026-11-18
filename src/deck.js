@@ -1488,6 +1488,7 @@ precision mediump float;
 uniform sampler2D fromTex;
 uniform sampler2D toTex;
 uniform float progress;
+uniform float seed;
 varying vec2 vUv;
 `
 
@@ -1612,6 +1613,7 @@ const transitions = (() => {
     program.from = gl.getUniformLocation(program, "fromTex")
     program.to = gl.getUniformLocation(program, "toTex")
     program.progress = gl.getUniformLocation(program, "progress")
+    program.seed = gl.getUniformLocation(program, "seed")
     return program
   }
 
@@ -1625,7 +1627,7 @@ const transitions = (() => {
   // but it can tell that the loop ran.
   const trace = window.__transitionTrace || (window.__transitionTrace = { draws: 0 })
 
-  function draw(program, progress) {
+  function draw(program, progress, seed) {
     trace.draws++
     gl.viewport(0, 0, SLIDE_W, SLIDE_H)
     gl.clearColor(0, 0, 0, 1)
@@ -1641,6 +1643,8 @@ const transitions = (() => {
     gl.uniform1i(program.from, 0)
     gl.uniform1i(program.to, 1)
     gl.uniform1f(program.progress, progress)
+    // A shader that never reads seed has no location; WebGL ignores the call.
+    gl.uniform1f(program.seed, seed)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
   }
 
@@ -1716,20 +1720,23 @@ const transitions = (() => {
     if (!from || !to) return false
     const program = compile(transition.name)
     if (!program) return false
+    // One seed per run, so a seeded shader (halftone) is never replayed with
+    // the same screen, front and ink it used at the last slide change.
+    const seed = Math.random()
     const token = generation
     whenReady([ from, to ], () => {
-      if (token === generation) animate(token, transition, program, from, to, reveal, toIndex)
+      if (token === generation) animate(token, transition, program, from, to, reveal, toIndex, seed)
     }, () => {
       if (token === generation) reveal(toIndex)
     })
     return true
   }
 
-  function animate(token, transition, program, from, to, reveal, toIndex) {
+  function animate(token, transition, program, from, to, reveal, toIndex, seed) {
     try {
       upload(fromTex, from.canvas, 0)
       upload(toTex, to.canvas, 1)
-      draw(program, 0)
+      draw(program, 0, seed)
     } catch {
       reveal(toIndex)
       return
@@ -1756,7 +1763,7 @@ const transitions = (() => {
           upload(toTex, to.canvas, 1)
         }
         const progress = Math.min(1, (now - start) / span)
-        draw(program, progress)
+        draw(program, progress, seed)
         if (progress < 1) frame = requestAnimationFrame(step)
         else {
           frame = 0

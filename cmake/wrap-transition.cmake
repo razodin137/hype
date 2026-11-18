@@ -7,7 +7,8 @@
 # Qt Quick supplies the vertex shader, whose output is qt_TexCoord0. ShaderEffect
 # packs the effect's properties into a std140 block bound at 0, while samplers
 # keep their own binding points, so fromTex and toTex match the QML properties of
-# those names and progress matches the QML progress property.
+# those names, and progress and seed match the QML properties of the same names.
+# seed is drawn by the host once per run; a body that does not use it ignores it.
 
 foreach(input COMMON BODY)
     if(NOT EXISTS "${${input}}")
@@ -25,6 +26,7 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     float progress;
+    float seed;
 };
 layout(binding = 1) uniform sampler2D fromTex;
 layout(binding = 2) uniform sampler2D toTex;
